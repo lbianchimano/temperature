@@ -1,0 +1,48 @@
+#cargo una tabla que llamo genes
+genes <- na.omit(genes)
+
+
+#hago el modelo de regresion cuadratico con la funcion
+
+out2 <- with(genes,
+             by(genes, Gen, function(x) lm(Expresión ~ Temperatura + I(Temperatura^2), data= x)))
+
+#out es una lista, lo puedo chequear
+is.list(out2)
+
+#cuantas regresiones hizo
+length(out2)
+
+#veo el summary del modelo de regresion de cada uno
+
+summary(out2[[1]])
+summary(out2[[2]])
+summary(out2[[3]])
+
+#aca puedo guardar como objetos a los coeficientes de la lista del modelo 
+outsum_cuadratic <- lapply(out2, summary)
+#outsum_cuadratic
+
+#obtengo una tabla con todos los coeficientes de la regresion lineal
+coefmat_cuadratic <- sapply(outsum_cuadratic, coef)
+#coefmat_cuadratic
+View(coefmat_cuadratic)
+
+#convierto la informacion para guardarlo en un dataframe
+
+df<-data.frame()
+n<-max(sapply(coefmat_cuadratic, length))
+df1<- data.frame()
+
+df1 <- lapply(coefmat_cuadratic, function(v) { c(v, rep(" ", n-length(v)))})
+data.frame(t(do.call(rbind, coefmat_cuadratic)))->df2
+
+#trasponer la tabla
+df2.t <- t(df2)
+#veo que este bien
+head(df2.t)
+
+#la guardo
+
+write.table(df2.t, "Regresion_cuadratica_t.txt", append= F, quote = T, sep = "\t", dec = ".", row.names = T)
+
