@@ -1,34 +1,41 @@
-#cargo una tabla que llamo genes
+######################
+#Script by           #
+#Luciana Bianchimano #
+######################
+
+
+#new table with data set, named "genes"
+#omit NAs 
 genes <- na.omit(genes)
 
 
-#hago el modelo de regresion cuadratico con la funcion
+#quadratic regression model with Temperatura as predictive variable. 
 
 out2 <- with(genes,
              by(genes, Gen, function(x) lm(Expresión ~ Temperatura + I(Temperatura^2), data= x)))
 
-#out es una lista, lo puedo chequear
+#out2 is a list, you can check it
 is.list(out2)
 
-#cuantas regresiones hizo
+#how many regressions have you made?
 length(out2)
 
-#veo el summary del modelo de regresion de cada uno
+#the summary of some regressions 
 
 summary(out2[[1]])
 summary(out2[[2]])
 summary(out2[[3]])
 
-#aca puedo guardar como objetos a los coeficientes de la lista del modelo 
+#save the coefficients in the model list as objects
 outsum_cuadratic <- lapply(out2, summary)
-#outsum_cuadratic
+View(outsum_cuadratic)
 
-#obtengo una tabla con todos los coeficientes de la regresion lineal
+#get a table with all the coefficients of the regression
 coefmat_cuadratic <- sapply(outsum_cuadratic, coef)
-#coefmat_cuadratic
 View(coefmat_cuadratic)
 
-#convierto la informacion para guardarlo en un dataframe
+###how to save this information
+#convert the information to save it in a dataframe
 
 df<-data.frame()
 n<-max(sapply(coefmat_cuadratic, length))
@@ -37,12 +44,12 @@ df1<- data.frame()
 df1 <- lapply(coefmat_cuadratic, function(v) { c(v, rep(" ", n-length(v)))})
 data.frame(t(do.call(rbind, coefmat_cuadratic)))->df2
 
-#trasponer la tabla
+#transpose table
 df2.t <- t(df2)
-#veo que este bien
+#check the new table
 head(df2.t)
 
-#la guardo
+#and last, save it
 
 write.table(df2.t, "Regresion_cuadratica_t.txt", append= F, quote = T, sep = "\t", dec = ".", row.names = T)
 
