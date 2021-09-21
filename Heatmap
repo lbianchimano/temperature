@@ -1,11 +1,10 @@
 library("RColorBrewer")
 library("gplots")
-library("ggplot2")
 library("pheatmap")
-getwd()
 
-data<-max_warm
-x<-as.matrix(COLDHEATmax)
+
+data<-readtable...#complete#
+x<-as.matrix(data)
 
 
 mypalette<- rev(brewer.pal(9,"OrRd"))
