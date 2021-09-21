@@ -1,0 +1,15 @@
+library("RColorBrewer")
+library("gplots")
+library("ggplot2")
+library("pheatmap")
+getwd()
+
+data<-max_warm
+x<-as.matrix(COLDHEATmax)
+
+
+mypalette<- rev(brewer.pal(9,"OrRd"))
+
+pheatmap(x, scale ="row", cluster_rows=TRUE, show_rownames=TRUE, cluster_cols=FALSE, color = colorRampPalette(rev(mypalette))(20000))
+
+
