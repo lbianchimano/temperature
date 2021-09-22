@@ -1,0 +1,64 @@
+require(edgeR)
+require(qvalue)
+
+#Lectura de los counts 
+
+counntab <- cortijo.txt #example
+head(counntab)
+
+#Convertimos a cpm los valores, cpm=(counts/tamaño libreria)*1000000
+myCPM <- cpm(counntab)
+#Establecemos el filtro de counts, se establece que para que un gen esté presente
+#debe tener al menos de 10 a 15 counts
+#A CPM of 0.5 is used as it corresponds to a count of 10-15 for the library sizes in this data set. If the count is any smaller, it is considered to be very low, indicating that the associated gene is not expressed in that sample. ... This ensures that a gene will be retained if it is only expressed in one group.
+
+thresh <- myCPM > 0.5
+table(rowSums(thresh))
+
+#Que esta condición se cumpla en al menos 3 muestras (ya que son 3 replicas biologicas)
+
+keep <- rowSums(thresh) >= 3
+counts.keep <- counntab[keep,]
+summary(keep)
+
+#Guardamos el archivo count.keep como los counts de los genes retenidos tras el filtro
+write.table(counts.keep, "cortijo_filtrados.txt")
+
+
+#Añadimos la información de las muestras
+#sampleinfo <- read.table("names.txt",header=TRUE, sep="\t")
+
+######la tabla "names" tiene el nombre de cada muestra ####
+######en una columna y la condicion en otra ####
+###por ejemplo###
+###Columna 1      Columna 2###
+###sample.id	    variable ###
+###LL_hipocotilo_1	LH     ###
+###LL_hipocotilo_2	LH     ###
+###LL_hipocotilo_3	LH     ###
+
+#Creamos archivo DGE
+y <- DGEList(counts.keep,group=names$variable)
+y <- DGEList(counts.keep)
+#Exploramos un poqui los datos
+y$samples
+barplot(y$samples$lib.size,names=colnames(y),las=2)
+plotMDS(y)
+y
+#Cálculo factores de normalización
+y <- calcNormFactors(y)
+
+#Matriz de diseño para posteriores comparaciones
+lev<-factor(names$variable, levels=unique(names$variable))
+design <-model.matrix(~0+lev)
+colnames(design)<-levels(lev)
+rownames(design) <- names$sample.id
+
+
+#Normalización con los normfactor calculados antes
+par(mfrow=c(1,1))
+v <- voom(y,design,plot = TRUE)
+write.table(v$E,"normalized_counts_cortijo.txt")
+#Visualización datos normalizados
+boxplot(v$E, xlab="", ylab="Log2 counts per million",las=2,main="Voom transformed logCPM")
+
