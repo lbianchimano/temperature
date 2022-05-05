@@ -1,0 +1,17 @@
+library(ggplot2)
+
+#where FE is Fold Enrichment and x is de variable of x axis (can be more than one), and Term is the GO term#
+
+
+plot1 <- ggplot(bubble ,aes(x= x, y=Term, size=FE, color=Pvalue))
+plot1 <- plot1+ geom_point(alpha=0.8) + scale_size(range= c(0.2, 20))
+plot1<- plot1 + scale_colour_gradientn(colours=c("red","grey90"),values = rescale(c(0.0001,0.001,0.01,0.1)),limits=c(0.0001,0.1))
+plot1
+
+#breaks and limits should be edited to be accord to your data
+
+plot1<- plot1 + scale_colour_gradientn(name = "p-value", trans = "log", 
+                                       breaks =  c(0.00000000001,0.00000001,0.00001,0.01),
+                                       limits = c(0.00000000001,0.01),
+                                       colours=c("red","grey90"))
+plot1
