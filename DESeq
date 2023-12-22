@@ -1,0 +1,83 @@
+if (!requireNamespace("BiocManager", quietly = TRUE))
+  install.packages("BiocManager")
+
+BiocManager::install("DESeq2")
+
+library(DESeq2)
+
+
+countdata <- counts.pif7
+# Convert to matrix
+countdata <- as.matrix(countdata)
+head(countdata)
+
+# Assign condition (first two are treatmets, second two contain controls)
+
+(condition <- factor(c(rep("trt", 2), rep("ctl", 2))))
+
+
+# Create a coldata frame and instantiate the DESeqDataSet. See DESeqDataSetFromMatrix
+(coldata <- data.frame(row.names=colnames(countdata), condition))
+dds <- DESeqDataSetFromMatrix(countData=countdata, colData=coldata, design=~condition)
+dds
+
+# Run the DESeq pipeline
+##DESeq does: estimateSizeFactors (This calculates the relative library depth of each sample) 
+             #estimateDispersions
+            #estimates the dispersion of counts for each gene 
+            #nbinomWaldTest
+            #calculates the significance of coefficients in a Negative Binomial GLM using the size and dispersion outputs
+
+dds <- DESeq(dds)
+
+
+# Plot dispersions
+png("qc-dispersions.png", 1000, 1000, pointsize=20)
+plotDispEsts(dds, main="Dispersion plot")
+dev.off()
+
+# Regularized log transformation for clustering/heatmaps, etc
+rld <- rlogTransformation(dds)
+head(assay(rld))
+hist(assay(rld))
+
+
+# Get differential expression results
+res <- results(dds)
+table(res$padj<0.05)
+## Order by adjusted p-value
+res <- res[order(res$padj), ]
+## Merge with normalized count data
+resdata <- merge(as.data.frame(res), as.data.frame(counts(dds, normalized=TRUE)), by="row.names", sort=FALSE)
+names(resdata)[1] <- "Gene"
+head(resdata)
+
+## Write results
+write.csv(resdata, file="diffexpr-results_PHYB.csv")
+
+## Examine plot of p-values
+hist(res$pvalue, breaks=50, col="grey")
+
+
+# Colors for plots below
+## Ugly:
+## (mycols <- 1:length(unique(condition)))
+## Use RColorBrewer, better
+library(RColorBrewer)
+(mycols <- brewer.pal(8, "Dark2")[1:length(unique(condition))])
+
+
+# Sample distance heatmap
+sampleDists <- as.matrix(dist(t(assay(rld))))
+library(gplots)
+png("qc-heatmap-samples.png", w=1000, h=1000, pointsize=20)
+heatmap.2(as.matrix(sampleDists), key=F, trace="none",
+          col=colorpanel(100, "black", "white"),
+          ColSideColors=mycols[condition], RowSideColors=mycols[condition],
+          margin=c(10, 10), main="Sample Distance Matrix")
+dev.off()
+
+
+
+
+
